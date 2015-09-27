@@ -1,0 +1,139 @@
+---
+title: "Is An Automatic or Manual Transmission Better For MPG"
+author: "Richard Ashley"
+date: "Sunday, September 27, 2015"
+output: pdf_document
+---
+```{r,echo=FALSE,message=FALSE}
+library(car)
+library(knitr)
+library(Hmisc)
+data(mtcars)
+```
+
+
+##Executive Summary
+The goal of the paper is to quantify the impact of the transmission type [automatic, manual] on the gass mialage [mpg] of the cars that are in the `mtcars` data set.  We will be building a multiple regression linear model to identify what factors are improtant to `mpg` so that we can appropriatly comment on impact of transmission type given the impact of other important factors. We found that a manual transmition provided on average a statitically significant benefit of 1.8 mpg more that automatic transmitions although there are other factors that have even more impact on mpg.
+
+##Exploratory Data Analyses 
+We will first load the data set using the `data(mtcars)` command and then eplore what this data set contains.
+
+```{r}
+str(mtcars)
+```
+As we can see, there are 10 factor variables plus `mpg`. A description of the meaning of these variables is given in the appendix. We also perform a `pairs` plot to further look at the relationships between all factors at once. see Figure 1 in the appendix. 
+
+From this we can identify that a number of factors appear to have descreat levels and we should code them specifically as a factor for this analysis.  This was done with the `mtcars$cyl <- factor(mtcars$cyl)` style command for the facotrs cyl, vs, am, gear, and carb. 
+
+```{r, echo=FALSE}
+mtcars$cyl <- factor(mtcars$cyl)
+mtcars$vs <- factor(mtcars$vs)
+mtcars$am <- factor(mtcars$am, labels = c("Automatic", "Manual"))
+mtcars$gear <- factor(mtcars$gear)
+mtcars$carb <- factor(mtcars$carb)
+```
+
+It is also clear from Figure 1 that a number of these factors are potentually correlated to `mpg`. For example `disp` and `wt` but that these may also be correlated with each other. We will have to be carefull in our model building to not select to many confounding variables. 
+
+We will also quickly look at just a simple box plot of mpg vs. transmission type. This indicates an average of about 7 mpg more for manual transmitions but this does not include any other potential factors. See Figure 2 for the box plot
+
+##Modle Selection
+To find the best model for determining the impact of transmission type on mpg, we will first look at a model that selects all factors and a model the selects on transmission type.  Finally we will then use a stepwise model selection techniche to fit the best model and then look at how much incluence transmision type has with all other significant factors removed.
+
+```{r, echo=FALSE}
+# simple model using transmission only
+fit1 <- lm(mpg ~ am, data = mtcars)
+fit1coef <- coef(summary(fit1))[2,1]
+fit1p <- coef(summary(fit1))[2,4]
+
+# model using all data as predictors
+fit2 = lm(mpg ~ ., data = mtcars)
+
+
+# stepwise AIC algorithm
+fit3 <- step(lm(mpg ~ ., data = mtcars), trace = 0)
+model <- as.character(fit3$call)[2]
+
+# compare to just using am
+comp <- anova(fit1, fit3)
+ttest <- t.test(mpg ~ am, data=mtcars)
+```
+
+The simplest model would be to only use `am` as the single explanitory variable. This produces results in Table 1. The basic model does show a significan effect from the transmission variable of  `r fit1coef`.  If we then add all factors to the model we get Table 2. Notice that none of the coeficients in this case are significant and that we have over fitted the model. Also from Table 2 you can see the VIF scores and that they are not very unifom. A number of these factors are adding significantly to the variation of the model.
+
+If we then use a stepwise search for the better model using the `setp` function, we get a model as in Table 3. Here the model is `r model`. In this case the VIF scores are very uniform and the residurl plot below looks resonable with fairly normal residuals.
+
+
+Figure 3:
+```{r, echo=FALSE, error=FALSE,message=FALSE,warning=FALSE,fig.height=5,fig.width=7}
+par(mfrow=c(2, 2))
+plot(fit3)
+```
+
+##Statistical Inference
+We can build a simple statistical inference of the estimate of the Simple model using a t statistic.  For the results see Table 4. For the Simple model of `mpg ~ am` the confidence interval on the estimate (impact of mpg going from Manual to Automatic) is between `r ttest$conf.int[1]` and `r ttest$conf.int[2]` mpg. So Manual would be significantly more effecient. [*for the code please see the rmarkdown document* at [link](https://www.google.com)]
+
+---
+\newpage
+#Apendix
+
+###Figure 1 - Pairs plot of all factors
+```{r,echo=FALSE,fig.height=6,fig.width=8}
+pairs(mtcars, main = "mtcars data")
+```
+
+###Figure 2 - Boxplot of MPG vs. Transmison Type
+```{r,echo=FALSE,fig.height=3,fig.width=7}
+boxplot(mpg ~ am, data = mtcars,
+        xlab = "Transmission", 
+        ylab = "MPG",
+        main = "MPG vs Transmission",
+        names = c("Automatic", "Manual"))
+```
+
+
+
+###Table 1 - Fit of Simple Model
+```{r,echo=FALSE}
+# simple model using transmission only
+fit1 <- lm(mpg ~ am, data = mtcars)
+summary(fit1)[4]
+```
+
+###Table 2 - Fit of All Model
+```{r,echo=FALSE}
+# model using all data as predictors
+fit2 = lm(mpg ~ ., data = mtcars)
+summary(fit2)[4]
+vif(fit2)
+```
+
+###Table 3 - Fit of AIC Stepwise Model, `r model` 
+```{r,echo=FALSE}
+# stepwise AIC algorithm
+fit3 <- step(lm(mpg ~ ., data = mtcars), trace = 0)
+summary(fit3)[4]
+vif(fit3)
+
+```
+
+###Table 4 - Statistical Inference, Confiedence intermal of Basic model
+```{r,echo=FALSE}
+# compare to just using am
+ttest
+```
+
+###Variable Discriptions
+ variable | Discription
+ --- | ---
+mpg | Miles/(US) gallon
+cyl | Number of cylinders
+disp |  Displacement (cu.in.)
+hp | Gross horsepower
+drat | Rear axle ratio
+wt | Weight (lb/1000)
+qsec | 1/4 mile time
+vs | V/S
+am | Transmission (0 = automatic, 1 = manual)
+gear | Number of forward gears
+carb | Number of carburetors
