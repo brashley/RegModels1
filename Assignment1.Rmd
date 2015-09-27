@@ -71,7 +71,7 @@ plot(fit3)
 ```
 
 ##Statistical Inference
-We can build a simple statistical inference of the estimate of the Simple model using a t statistic.  For the results see Table 4. For the Simple model of `mpg ~ am` the confidence interval on the estimate (impact of mpg going from Manual to Automatic) is between `r ttest$conf.int[1]` and `r ttest$conf.int[2]` mpg. So Manual would be significantly more effecient. [*for the code please see the rmarkdown document* at [link](https://www.google.com)]
+We can build a simple statistical inference of the estimate of the Simple model using a t statistic.  For the results see Table 4. For the Simple model of `mpg ~ am` the confidence interval on the estimate (impact of mpg going from Manual to Automatic) is between `r ttest$conf.int[1]` and `r ttest$conf.int[2]` mpg. So Manual would be significantly more effecient. [*for the code please see the rmarkdown document* at [link](https://github.com/brashley/RegModels1/blob/master/Assignment1.Rmd)]
 
 ---
 \newpage
